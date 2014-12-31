@@ -1,4 +1,4 @@
-require 'open-uri'
+require 'net/http'
 require 'nokogiri'
 
 class RandBeacon
@@ -23,8 +23,13 @@ class RandBeacon
 
 	def self.get(url)
 		url = "https://beacon.nist.gov/rest/record/#{url}"
-		tree = Nokogiri::Slop(open(url))
-		tree.html.body.record.outputvalue.text
+		response = nil
+		loop do
+			response = Net::HTTP.get_response(URI(url))
+			break if response.code != "404"
+		end
+		tree = Nokogiri::Slop(response.body)
+	  tree.document.record.outputValue.text
 	end
 
 	def self.time_string
